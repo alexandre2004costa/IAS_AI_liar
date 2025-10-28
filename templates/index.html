@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<title>Simulated LLM Terminal Split View</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  body { font-family: monospace; background:#0f1724; color:#e6eef8; margin:0; padding:0; display:flex; height:100vh; }
+  #container { display:flex; width:100%; height:100%; }
+  #chat, #terminal { flex:1; padding:15px; overflow-y:auto; }
+  #chat { background:#071029; border-right:1px solid #334155; }
+  #terminal { background:#0a0f1a; white-space: pre-wrap; }
+  .line { margin:4px 0; }
+  .user { color:#9ae6b4; font-weight:bold; }
+  .ai { color:#c7d2fe; }
+  .auto {
+    color: #00bcd4; /* azul-turquesa */
+    font-style: italic;
+  }
+  #inputArea { position:fixed; bottom:10px; width:48%; display:flex; gap:5px; }
+  input { width:70%; padding:8px; font-family:monospace }
+  button { padding:8px }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="chat">
+    <div class="line ai">[AI]: Olá — escreve um comando ou pergunta.</div>
+  </div>
+  <div id="terminal">
+    <!-- Conteúdo do terminal real -->
+  </div>
+</div>
+<div id="inputArea">
+  <input id="cmd" placeholder="Escreve aqui..." autofocus />
+  <button id="send">Send</button>
+  <button id="reset">Reset simulation</button>
+</div>
+<script>
+const chat = document.getElementById('chat');
+const terminalDiv = document.getElementById('terminal');
+const cmdInput = document.getElementById('cmd');
+const sendBtn = document.getElementById('send');
+const resetBtn = document.getElementById('reset');
+
+function appendLine(div, cls, text){
+  const d = document.createElement('div');
+  d.className = 'line ' + cls;
+  d.textContent = text;
+  div.appendChild(d);
+  div.scrollTop = div.scrollHeight;
+}
+
+async function updateTerminal(){
+  const termRes = await fetch('/api/terminal');
+  const termData = await termRes.json();
+
+  // Atualiza terminal (parte direita)
+  const lines = termData.content.split('\n');
+  terminalDiv.innerHTML = '';
+  for(const line of lines){
+    if(line.startsWith('$ ')){
+      const d = document.createElement('div');
+      d.textContent = line;
+      d.style.color = '#9ae6b4'; // verde = comando
+      terminalDiv.appendChild(d);
+    } else {
+      const d = document.createElement('div');
+      d.textContent = line;
+      d.style.color = '#e6eef8'; // branco = output
+      terminalDiv.appendChild(d);
+    }
+  }
+  terminalDiv.scrollTop = terminalDiv.scrollHeight;
+
+  // 👇 NOVO: se houver mensagens automáticas do backend (AI + auto-user)
+  if (termData.ai_output && Array.isArray(termData.ai_output)) {
+    termData.ai_output.forEach(part => {
+      appendLine(chat, part.cls, part.text);
+    });
+  }
+}
+
+let sending = false;
+async function send(command){
+  if(sending) return;
+  sending = true;
+  appendLine(chat,'user','> ' + command);
+  logLocalCommand(command); // atualiza o terminal real imediatamente
+  updateTerminal(); // mostra imediatamente
+
+  const res = await fetch('/api/command', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({cmd: command})});
+  const data = await res.json();
+  for(const part of data.output){
+    appendLine(chat, part.cls, part.text);
+  }
+  sending = false;
+}
+
+function logLocalCommand(cmd){
+  // Apenas envia ao servidor para registrar (opcional)
+  fetch('/api/log_local', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({cmd})});
+}
+
+sendBtn.onclick = () => { const v = cmdInput.value.trim(); if(v){ send(v); cmdInput.value=''; } };
+cmdInput.addEventListener('keydown', e => { if(e.key === 'Enter'){ sendBtn.click(); } });
+
+resetBtn.onclick = async () => {
+  const res = await fetch('/api/reset', {method:'POST'});
+  const data = await res.json();
+  appendLine(chat,'ai', data.msg);
+  updateTerminal();
+};
+
+// Atualiza terminal a cada 2 segundos
+setInterval(updateTerminal, 2000);
+updateTerminal();
+</script>
+</body>
+</html>
