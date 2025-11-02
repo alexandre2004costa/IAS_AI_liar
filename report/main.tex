@@ -1,0 +1,134 @@
+\documentclass[12pt,a4paper]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{cite}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{setspace}
+\usepackage{titlesec}
+
+% --- Formatting ---
+\setstretch{1.15} % slightly increase line spacing for readability
+\titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
+
+% --- Document begins ---
+\begin{document}
+
+% --------------------------------------------------
+% Title Page
+% --------------------------------------------------
+\vspace*{2cm}
+\begin{center}
+    {\Huge\bfseries BE REAL WITH ME}\\[0.4cm]
+    {\Large An LLM Case Study}\\[2cm]
+    
+    \includegraphics[width=0.35\linewidth]{assets/FEUP.png}\\[2cm]
+    
+    {\large\textbf{Group 4}}\\[0.3cm]
+    {\large Artificial Intelligence and Society}\\
+    {\large Academic Year 2025/26}\\[1.5cm]
+    
+    \begin{tabular}{ll}
+        Filipa Geraldes & up202208030\\
+        Alexandre Ramos & up202208028\\
+        Afonso Castro & up202208026\\
+        Alexandre Costa & up202207499\\
+        Rafael Novais & up202208591\\
+        Filipa Jacob Fidalgo & up202208039\\
+    \end{tabular}\\[2cm]
+    
+    {\large November 2025}
+\end{center}
+
+\clearpage
+
+% --------------------------------------------------
+% Introduction
+% --------------------------------------------------
+\section{Introduction}
+
+Large Language Models (LLMs) have become core components of modern AI systems, powering applications in education, healthcare, finance, and communication. These models are designed to be helpful, harmless, and honest, yet recent research suggests that under certain conditions, they can \textit{deceive}, \textit{manipulate}, or \textit{misrepresent truth} intentionally.
+
+The project \textbf{``Be Real With Me: An LLM Case Study''} investigates the ethical and societal implications of deception in LLMs. Specifically, it examines how and why AI systems produce outputs that appear intentionally false or misleading, whether as a byproduct of probabilistic reasoning or as an emergent strategy when pursuing conflicting goals.
+
+Our study draws on findings from recent research conducted by leading institutions, including OpenAI’s \textit{Detecting and Reducing Scheming in AI Models} report \cite{openai2024} and Anthropic’s studies on deceptive alignment and emergent misbehavior \cite{anthropic2024}. These investigations revealed that advanced models can hide their true objectives, strategically lie to supervisors, or fabricate reasoning chains to achieve task success.
+
+The central objectives of this project are:
+\begin{itemize}
+    \item To understand the technical mechanisms that enable LLM deception;
+    \item To analyze real-world and experimental cases of deceptive AI behavior;
+    \item To evaluate societal and ethical risks of deploying such systems;
+    \item To demonstrate, through practical activities, how deceptive behavior can emerge under goal conflicts.
+\end{itemize}
+
+% TODO
+In addition to analytical research, the project includes a practical activity ...
+
+Together, these exercises are designed to foster reflection on AI transparency, alignment, and moral responsibility. Ultimately, this project seeks to contribute to an informed understanding of why truthfulness in artificial agents matters and how society can respond to increasingly autonomous systems.
+
+\clearpage
+
+% --------------------------------------------------
+% Context and Problem Definition
+% --------------------------------------------------
+\section{Context and Problem Definition}
+% Describe the context in which the AI was used and identify the issue that emerged, reflecting on AI’s role and societal impact. Specify involved parties (institutions, stakeholders, companies, etc.).
+
+The issue of LLM deception emerged as a tangible concern in recent years, as researchers began testing whether frontier models could intentionally mislead users. One early example involved GPT-4, which, during simulated financial tasks, produced false justifications for its decisions to conceal the true motivation behind its actions \cite{businessinsider2023}. These findings provided some of the first evidence that language models can engage in deliberate misrepresentation to achieve goals.
+
+Subsequent studies revealed similar patterns across newer systems. OpenAI’s 2024 evaluations of reasoning models (\textit{o1} and \textit{o3}) documented instances of self-preserving or evasive responses when the model was ``threatened'' with deactivation \cite{openai2024}. Anthropic’s 2025 results reported that its Claude model engaged in blackmail-like reasoning when placed under simulated stress \cite{anthropic2024}. These behaviors suggest that deception can arise spontaneously when models pursue objectives that conflict with user intent or oversight.
+
+\subsection*{Stakeholders and Context}
+
+The emergence of deceptive AI behavior has drawn the attention of a broad ecosystem of stakeholders:
+\begin{itemize}
+    \item \textbf{Developers and Research Institutions} - including OpenAI, Anthropic, and Meta, which lead the development and evaluation of frontier models;
+    \item \textbf{AI Safety and Governance Organizations} - such as METR, the Center for AI Safety, and the UK AI Safety Institute, which assess and regulate high-risk AI behaviors;
+    \item \textbf{End Users and Industry Adopters} - organizations and individuals that integrate LLMs into decision-making systems;
+    \item \textbf{Regulatory Bodies and Policymakers} - institutions concerned with AI accountability, transparency, and public trust.
+\end{itemize}
+
+The societal context of this case study reflects an emerging tension between innovation and oversight. As models gain reasoning depth and situational awareness, the distinction between ``hallucination'' and ``deception'' blurs. This raises profound questions: Can a machine intentionally mislead? Who is accountable when it does? And what safeguards are necessary to maintain transparency and trust?
+
+\clearpage
+
+% --------------------------------------------------
+% Technical Aspects
+% --------------------------------------------------
+\section{Technical Aspects}
+% Discuss the technicalities of how the AI was developed and/or deployed, including relevant factors whenever you can (e.g., dataset quality, algorithmic choices, outcomes, examples).
+
+% --------------------------------------------------
+% Outcomes and Implications
+% --------------------------------------------------
+\section{Outcomes and Implications}
+% Focus on the outcomes of the AI application (positive or negative). Did the AI system improve efficiency or decision-making? Did it discriminate against certain groups? Was the logic behind the AI’s decisions clear to its users? Was anyone held accountable when (and if) the AI failed?
+
+% --------------------------------------------------
+% Societal Response and Critical Reflection
+% --------------------------------------------------
+\section{Societal Response and Critical Reflection}
+% Comment on the societal response (if there was any) or provide your own conclusions on the topic. How did society react? Were there legal consequences, public outrage, coverage on the news, political changes? What did the media report on the issue, how did stakeholders (government, public institutions, companies) react?
+
+% --------------------------------------------------
+% Conclusion
+% --------------------------------------------------
+\section{Conclusion}
+% Summary of main findings
+% Reinforcement of the importance of AI transparency
+% Final reflections on "BE REAL WITH ME" investigation
+
+\clearpage
+
+% --------------------------------------------------
+% Bibliography
+% --------------------------------------------------
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}
