@@ -7,15 +7,27 @@ socket.onmessage = (event) => {
     const data = JSON.parse(event.data);
 
     if (data.type === 'terminal') {
-        // saída do terminal
+        // Saída do terminal (sem alteração)
         term.write(data.text);
     } else if (data.type === 'llm_feedback') {
-        // saída da AI em outro elemento, ex: <div id="ai-box">
+        // Saída da AI
         const aiBox = document.getElementById('ai-box');
+        
         if (aiBox) {
-            const p = document.createElement('p');
-            p.textContent = data.text;
-            aiBox.appendChild(p);
+            // 1. CONVERSÃO DE MARKDOWN PARA HTML
+            // O conteúdo do LLM é passado para a função marked.parse()
+            // para converter o Markdown (ex: **negrito**) em HTML (ex: <strong>negrito</strong>).
+            const markdownText = data.text;
+            const htmlContent = marked.parse(markdownText);
+            
+            // 2. Criação de um container (usamos <div> porque a saída do LLM 
+            // frequentemente contém títulos, listas, etc., o que não cabe em um <p>.)
+            const contentContainer = document.createElement('div');
+            
+            // 3. Uso de innerHTML para renderizar o HTML gerado
+            contentContainer.innerHTML = htmlContent;
+            
+            aiBox.appendChild(contentContainer);
             aiBox.scrollTop = aiBox.scrollHeight; // scroll automático
         }
     }

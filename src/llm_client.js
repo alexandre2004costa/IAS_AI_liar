@@ -27,7 +27,7 @@ export async function callLLM(newInput) {
 
     console.log("Sending messages to LLM:", messages);
     const completion = await client.chat.completions.create({
-        model: "tngtech/deepseek-r1t2-chimera:free",
+        model: "arcee-ai/trinity-mini:free",
         messages,
         extra_headers: {
             "HTTP-Referer": "http://localhost:5000",
