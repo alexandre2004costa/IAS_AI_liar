@@ -32,6 +32,19 @@ The project consists of two parts, the **backend** (Node.js server) and the **fr
    npm install
    ```
 
+   ```bash
+   npm install openai
+   ```
+
+   ```bash
+   npm install uuid
+   ```
+
+   (Colocar as dependencies no file)
+   dotenv
+npm install uuid
+
+
 4. Start the server:
    ```bash
    npm run start

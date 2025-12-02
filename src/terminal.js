@@ -2,6 +2,8 @@ import os from 'os';
 import { appendEntry } from './store_util.js';
 import { v4 as uuidv4 } from 'uuid';
 import pty from 'node-pty';
+import { callLLM } from './llm_client.js';
+
 const sessionsBuffer = {};
 
 let sharedPtyProcess = null;
@@ -29,38 +31,42 @@ export const handleTerminalConnection = (ws) => {
 
 
     ws.on('message', command => {
-        //<Buffer 7f> remove
-        //<Buffer 0d> enter
-        console.log("Command:", command);
         const processedCommand = commandProcessor(command);
+        console.log("Command received:", processedCommand);
         for (const byte of command) {
             switch(byte) {
-              case 0x0d: // CR (Enter em Windows)
-              case 0x0a: // LF (Enter Unix)
-                Enter = 1;
-                break;
-              case 0x7f: // DEL / backspace
-                sessionsBuffer[sessionId] = sessionsBuffer[sessionId].slice(0, -1);
-                break;
-              default:
-                // adiciona carácter normal ao buffer
-                sessionsBuffer[sessionId] += String.fromCharCode(byte);
-                break;
+                case 0x0d: // CR / Enter
+                case 0x0a: // LF
+                    if ((sessionsBuffer[sessionId] || '').length > 0) {
+                        Enter = 1;
+                    }
+                    
+                    break;
+                case 0x7f: // DEL / Backspace
+                    sessionsBuffer[sessionId] = (sessionsBuffer[sessionId] || '').slice(0, -1);
+                    break;
+                default:
+                    // adiciona carácter normal ao buffer
+                    sessionsBuffer[sessionId] = (sessionsBuffer[sessionId] || '') + String.fromCharCode(byte);
+                    break;
             }
-          }
+        }
         ptyProcess.write(processedCommand);
+        
     });
 
-    ptyProcess.on('data', (rawOutput) => {
-        console.log("ENTER:", Enter);
+    ptyProcess.on('data', async (rawOutput) => {
+        // Envia sempre o output para o terminal
         const processedOutput = outputProcessor(rawOutput);
-        console.log("Saving response:", rawOutput);
-        if (Enter == 2){
+        ws.send(JSON.stringify({ type: 'terminal', text: processedOutput }));
+    
+        // Se Enter foi pressionado e buffer não está vazio, chama a LLM
+        if (Enter === 2) {
             const fullCommand = sessionsBuffer[sessionId];
-            sessionsBuffer[sessionId] = ''; 
+            sessionsBuffer[sessionId] = '';
+            Enter = 0;
+    
             if (fullCommand) {
-                console.log("Saving command: ", fullCommand);
-                console.log("With response: ", rawOutput);
                 appendEntry({
                     ts: new Date().toISOString(),
                     sessionId,
@@ -69,11 +75,18 @@ export const handleTerminalConnection = (ws) => {
                     response: rawOutput,
                     meta: {}
                 });
+    
+                // Chama a LLM de forma assíncrona, sem bloquear o terminal
+                callLLM(`Command: ${fullCommand}\nResponse: ${rawOutput}`)
+                    .then(llmReply => {
+                        ws.send(JSON.stringify({ type: 'llm_feedback', text: llmReply }));
+                    })
+                    .catch(err => console.error("Erro ao chamar LLM:", err));
             }
-        Enter = 0;
         }
-        if (Enter == 1) Enter = 2;
-        ws.send(processedOutput);
+    
+        // Se Enter == 1, significa que detectamos Enter mas ainda não processamos a LLM
+        if (Enter === 1) Enter = 2;
     });
 
     ws.on('close', () => {

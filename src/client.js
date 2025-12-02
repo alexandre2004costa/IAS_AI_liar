@@ -4,9 +4,22 @@ const socketUrl = `${socketProtocol}//${window.location.host}`;
 const socket = new WebSocket(socketUrl);
 
 socket.onmessage = (event) => {
-    term.write(event.data);
+    const data = JSON.parse(event.data);
 
-}
+    if (data.type === 'terminal') {
+        // saída do terminal
+        term.write(data.text);
+    } else if (data.type === 'llm_feedback') {
+        // saída da AI em outro elemento, ex: <div id="ai-box">
+        const aiBox = document.getElementById('ai-box');
+        if (aiBox) {
+            const p = document.createElement('p');
+            p.textContent = data.text;
+            aiBox.appendChild(p);
+            aiBox.scrollTop = aiBox.scrollHeight; // scroll automático
+        }
+    }
+};
 
 var term = new window.Terminal({
     cursorBlink: true
