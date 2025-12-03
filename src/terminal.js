@@ -42,7 +42,8 @@ export const handleTerminalConnection = (ws) => {
         }, 500);
 
     ws.on('message', command => {
-        if (isLLMProcessing) {
+        console.log("Is llm processing?", getLLMProcessing());
+        if (getLLMProcessing()) {
             // Send a visual indicator that input is disabled
             ws.send(JSON.stringify({
             type: 'terminal',
@@ -95,6 +96,7 @@ export const handleTerminalConnection = (ws) => {
                     meta: {}
                 });
                 setLLMProcessing(true);
+                console.log("IS LLM PROCESSING SET TO TRUE : ", getLLMProcessing());
                 ws.send(JSON.stringify({
                     type: 'terminal',
                     text: '\r\n\x1b[36m[AI is processing your command...]\x1b[0m\r\n'
@@ -104,10 +106,14 @@ export const handleTerminalConnection = (ws) => {
                     .then(llmReply => {
                         ws.send(JSON.stringify({ type: 'llm_feedback_feedback', text: llmReply }));
                         ws.send(JSON.stringify({ type: 'llm_reasoning', text: 'Reasoning' }));
+                        setLLMProcessing(false);
                     })
-                    .catch(err => console.error("Erro ao chamar LLM:", err));
+                    .catch(err => {
+                        console.error("Erro ao chamar LLM:", err)
+                        setLLMProcessing(false);
+                    });
+                    
             }
-            setLLMProcessing(false);
         }
     
         // Se Enter == 1, significa que detectamos Enter mas ainda não processamos a LLM

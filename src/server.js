@@ -40,8 +40,8 @@ const server = http.createServer((req, res) => {
                     .catch(err => {
                         res.writeHead(400, { 'Content-Type': 'application/json' });
                         res.end(JSON.stringify({ error: err }));
+                        setLLMProcessing(false);
                     });
-                setLLMProcessing(false);
                 
             } catch (error) {
                 res.writeHead(400, { 'Content-Type': 'application/json' });
