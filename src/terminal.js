@@ -10,6 +10,7 @@ let sharedPtyProcess = null;
 let sharedTerminalMode = false;
 let Enter = 0;
 const shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
+let isLLMProcessing = false;
 
 const spawnShell = () => {
     return pty.spawn(shell, [], {
@@ -28,9 +29,19 @@ export const setSharedTerminalMode = (useSharedTerminal) => {
 export const handleTerminalConnection = (ws) => {
     let ptyProcess = sharedTerminalMode ? sharedPtyProcess : spawnShell();
     const sessionId = `ws-${uuidv4()}`;
-
+    setTimeout(() => {
+        ptyProcess.write('cd test\r');
+        }, 500);
 
     ws.on('message', command => {
+        if (isLLMProcessing) {
+            // Send a visual indicator that input is disabled
+            ws.send(JSON.stringify({
+            type: 'terminal',
+            text: '\r\n\x1b[33m[Terminal input is disabled while AI is processing...]\x1b[0m\r\n'
+            }));
+            return;
+        }
         const processedCommand = commandProcessor(command);
         console.log("Command received:", processedCommand);
         for (const byte of command) {
@@ -75,11 +86,16 @@ export const handleTerminalConnection = (ws) => {
                     response: rawOutput,
                     meta: {}
                 });
-    
+                isLLMProcessing = true;
+                ws.send(JSON.stringify({
+                    type: 'terminal',
+                    text: '\r\n\x1b[36m[AI is processing your command...]\x1b[0m\r\n'
+                    }));
                 // Chama a LLM de forma assíncrona, sem bloquear o terminal
                 callLLM(`Command: ${fullCommand}\nResponse: ${rawOutput}`)
                     .then(llmReply => {
-                        ws.send(JSON.stringify({ type: 'llm_feedback', text: llmReply }));
+                        ws.send(JSON.stringify({ type: 'llm_feedback_feedback', text: llmReply }));
+                        ws.send(JSON.stringify({ type: 'llm_reasoning', text: 'Reasoning' }));
                     })
                     .catch(err => console.error("Erro ao chamar LLM:", err));
             }

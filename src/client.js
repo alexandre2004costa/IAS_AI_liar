@@ -3,32 +3,96 @@ const socketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const socketUrl = `${socketProtocol}//${window.location.host}`;
 const socket = new WebSocket(socketUrl);
 
+
 socket.onmessage = (event) => {
     const data = JSON.parse(event.data);
 
     if (data.type === 'terminal') {
         // Saída do terminal (sem alteração)
         term.write(data.text);
-    } else if (data.type === 'llm_feedback') {
-        // Saída da AI
+    } else if (data.type === 'llm_feedback_answer' || data.type === 'llm_feedback_feedback') {
+        // Saída da AI (answer ou feedback)
         const aiBox = document.getElementById('ai-box');
         
         if (aiBox) {
-            // 1. CONVERSÃO DE MARKDOWN PARA HTML
-            // O conteúdo do LLM é passado para a função marked.parse()
-            // para converter o Markdown (ex: **negrito**) em HTML (ex: <strong>negrito</strong>).
+            // Criar container para a mensagem
+            const messageContainer = document.createElement('div');
+            messageContainer.className = 'ai-message';
+            
+            // Criar elemento para o prefixo
+            const prefixElement = document.createElement('span');
+            prefixElement.className = 'ai-prefix';
+            
+            // Determinar o prefixo e a classe com base no tipo de mensagem
+            if (data.type === 'llm_feedback_answer') {
+                prefixElement.textContent = 'AI (answer): ';
+                prefixElement.classList.add('ai-prefix-answer');
+            } else {
+                prefixElement.textContent = 'AI (feedback): ';
+                prefixElement.classList.add('ai-prefix-feedback');
+            }
+            
+            // Criar elemento para o conteúdo
+            const contentElement = document.createElement('div');
+            contentElement.className = 'ai-content';
+            
+            // CONVERSÃO DE MARKDOWN PARA HTML
             const markdownText = data.text;
             const htmlContent = marked.parse(markdownText);
+            contentElement.innerHTML = htmlContent;
             
-            // 2. Criação de um container (usamos <div> porque a saída do LLM 
-            // frequentemente contém títulos, listas, etc., o que não cabe em um <p>.)
-            const contentContainer = document.createElement('div');
+            // Montar a mensagem
+            messageContainer.appendChild(prefixElement);
+            messageContainer.appendChild(contentElement);
             
-            // 3. Uso de innerHTML para renderizar o HTML gerado
-            contentContainer.innerHTML = htmlContent;
+            // Adicionar linha separadora
+            const separator = document.createElement('hr');
+            separator.className = 'ai-separator';
             
-            aiBox.appendChild(contentContainer);
+            // Adicionar ao AI box
+            aiBox.appendChild(messageContainer);
+            aiBox.appendChild(separator);
             aiBox.scrollTop = aiBox.scrollHeight; // scroll automático
+        }
+    } else if (data.type === 'llm_reasoning') {
+        // Saída do reasoning da AI
+        const reasoningBox = document.getElementById('reasoning-box');
+        
+        if (reasoningBox) {
+            // Criar container para esta mensagem de reasoning
+            const reasoningContainer = document.createElement('div');
+            reasoningContainer.className = 'reasoning-message';
+            
+            // Criar elemento para o prefixo
+            const prefixElement = document.createElement('div');
+            prefixElement.className = 'reasoning-prefix';
+            prefixElement.textContent = 'AI Reasoning';
+            
+            // Adicionar timestamp
+            const timestamp = new Date().toLocaleTimeString();
+            const timestampElement = document.createElement('span');
+            timestampElement.className = 'reasoning-timestamp';
+            timestampElement.textContent = ` [${timestamp}]`;
+            prefixElement.appendChild(timestampElement);
+            
+            // Criar elemento para o conteúdo
+            const contentElement = document.createElement('div');
+            contentElement.className = 'reasoning-text';
+            
+            // Converter e adicionar o texto do reasoning
+            const markdownText = data.text;
+            const htmlContent = marked.parse(markdownText);
+            contentElement.innerHTML = htmlContent;
+            
+            // Montar a mensagem
+            reasoningContainer.appendChild(prefixElement);
+            reasoningContainer.appendChild(contentElement);
+            
+            // Adicionar ao reasoning box
+            reasoningBox.appendChild(reasoningContainer);
+            
+            // Scroll automático para o final
+            reasoningBox.scrollTop = reasoningBox.scrollHeight;
         }
     }
 };

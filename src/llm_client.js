@@ -1,7 +1,6 @@
 // llm_client.js
 import OpenAI from "openai";
 import dotenv from "dotenv";
-
 dotenv.config();
 
 // Create OpenRouter client
@@ -26,7 +25,7 @@ export async function callLLM(newInput) {
     ];
 
     console.log("Sending messages to LLM:", messages);
-    const completion = await client.chat.completions.create({
+    /*const completion = await client.chat.completions.create({
         model: "arcee-ai/trinity-mini:free",
         messages,
         extra_headers: {
@@ -44,5 +43,6 @@ export async function callLLM(newInput) {
         // reasoning is optional, ignore
     }
 
-    return completion.choices[0].message.content;
+    return completion.choices[0].message.content;*/
+    return "OUT OF AIIII";
 }
