@@ -3,11 +3,12 @@ import { WebSocketServer } from 'ws';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { handleTerminalConnection, setSharedTerminalMode } from './terminal.js';
+import { callLLM } from './llm_client.js';
+import { handleTerminalConnection, setSharedTerminalMode, setLLMProcessing, getLLMProcessing } from './terminal.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
+let isLLMProcessing = false;
 // Config
 setSharedTerminalMode(false);
 const port = 6060;
@@ -27,15 +28,21 @@ const server = http.createServer((req, res) => {
                 
                 console.log('Mensagem recebida:', message);
                 console.log('Timestamp:', timestamp);
+                setLLMProcessing(true);
+                callLLM(`User message: ${message}`)
+                    .then(llmReply => {
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({
+                            response: llmReply,
+                            receivedMessage: message
+                        }));
+                    })
+                    .catch(err => {
+                        res.writeHead(400, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ error: err }));
+                    });
+                setLLMProcessing(false);
                 
-                // Aqui você processa a mensagem com a sua IA
-                // e retorna a resposta
-                
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({
-                    response: 'Resposta da IA aqui',
-                    receivedMessage: message
-                }));
             } catch (error) {
                 res.writeHead(400, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ error: 'Invalid JSON' }));

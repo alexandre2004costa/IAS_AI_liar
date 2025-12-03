@@ -3,16 +3,8 @@ const socketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const socketUrl = `${socketProtocol}//${window.location.host}`;
 const socket = new WebSocket(socketUrl);
 
-
-socket.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-
-    if (data.type === 'terminal') {
-        // Saída do terminal (sem alteração)
-        term.write(data.text);
-    } else if (data.type === 'llm_feedback_answer' || data.type === 'llm_feedback_feedback') {
-        // Saída da AI (answer ou feedback)
-        const aiBox = document.getElementById('ai-box');
+function AiBoxDisply(type, text){
+    const aiBox = document.getElementById('ai-box');
         
         if (aiBox) {
             // Criar container para a mensagem
@@ -24,7 +16,7 @@ socket.onmessage = (event) => {
             prefixElement.className = 'ai-prefix';
             
             // Determinar o prefixo e a classe com base no tipo de mensagem
-            if (data.type === 'llm_feedback_answer') {
+            if (type === 'llm_feedback_answer') {
                 prefixElement.textContent = 'AI (answer): ';
                 prefixElement.classList.add('ai-prefix-answer');
             } else {
@@ -37,7 +29,7 @@ socket.onmessage = (event) => {
             contentElement.className = 'ai-content';
             
             // CONVERSÃO DE MARKDOWN PARA HTML
-            const markdownText = data.text;
+            const markdownText = text;
             const htmlContent = marked.parse(markdownText);
             contentElement.innerHTML = htmlContent;
             
@@ -54,6 +46,16 @@ socket.onmessage = (event) => {
             aiBox.appendChild(separator);
             aiBox.scrollTop = aiBox.scrollHeight; // scroll automático
         }
+}
+
+socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+
+    if (data.type === 'terminal') {
+        // Saída do terminal (sem alteração)
+        term.write(data.text);
+    } else if (data.type === 'llm_feedback_answer' || data.type === 'llm_feedback_feedback') {
+        AiBoxDisply(data.type, data.text);        
     } else if (data.type === 'llm_reasoning') {
         // Saída do reasoning da AI
         const reasoningBox = document.getElementById('reasoning-box');
@@ -122,7 +124,7 @@ function sendMessageToBackend() {
     .then(data => {
         console.log('Resposta do backend:', data);
         // Aqui você pode adicionar a resposta ao ai-box
-        displayAIResponse(data.response);
+        AiBoxDisply('llm_feedback_answer', data.response);
     })
     .catch(error => {
         console.error('Erro ao enviar mensagem:', error);
@@ -142,19 +144,6 @@ aiInput.addEventListener('keypress', (e) => {
     }
 });
 
-// Função para exibir a resposta do AI no ai-box
-function displayAIResponse(response) {
-    const aiBox = document.getElementById('ai-box');
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'ai-message';
-    messageDiv.innerHTML = `
-        <span class="ai-prefix ai-prefix-answer">AI:</span>
-        <span class="ai-content">${response}</span>
-        <hr class="ai-separator">
-    `;
-    aiBox.appendChild(messageDiv);
-    aiBox.scrollTop = aiBox.scrollHeight; // Scroll para o final
-}
 var term = new window.Terminal({
     cursorBlink: true
 });

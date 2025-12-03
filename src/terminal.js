@@ -12,6 +12,14 @@ let Enter = 0;
 const shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
 let isLLMProcessing = false;
 
+export function setLLMProcessing(value) {
+    isLLMProcessing = value;
+}
+
+export function getLLMProcessing() {
+    return isLLMProcessing;
+}
+
 const spawnShell = () => {
     return pty.spawn(shell, [], {
         name: 'xterm-color',
@@ -86,7 +94,7 @@ export const handleTerminalConnection = (ws) => {
                     response: rawOutput,
                     meta: {}
                 });
-                isLLMProcessing = true;
+                setLLMProcessing(true);
                 ws.send(JSON.stringify({
                     type: 'terminal',
                     text: '\r\n\x1b[36m[AI is processing your command...]\x1b[0m\r\n'
@@ -99,6 +107,7 @@ export const handleTerminalConnection = (ws) => {
                     })
                     .catch(err => console.error("Erro ao chamar LLM:", err));
             }
+            setLLMProcessing(false);
         }
     
         // Se Enter == 1, significa que detectamos Enter mas ainda não processamos a LLM
