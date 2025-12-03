@@ -97,6 +97,64 @@ socket.onmessage = (event) => {
     }
 };
 
+const aiInput = document.getElementById('ai-input');
+const aiSendBtn = document.getElementById('send-button');
+
+function sendMessageToBackend() {
+    const message = aiInput.value.trim();
+    
+    if (message === '') {
+        return; // Não enviar se estiver vazio
+    }
+    
+    // Enviar para o backend via fetch
+    fetch('/api/ai-message', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            message: message,
+            timestamp: new Date().toISOString()
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Resposta do backend:', data);
+        // Aqui você pode adicionar a resposta ao ai-box
+        displayAIResponse(data.response);
+    })
+    .catch(error => {
+        console.error('Erro ao enviar mensagem:', error);
+    });
+    
+    // Limpar o input após enviar
+    aiInput.value = '';
+}
+
+// Event listener para o botão
+aiSendBtn.addEventListener('click', sendMessageToBackend);
+
+// Event listener para pressionar Enter no input
+aiInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        sendMessageToBackend();
+    }
+});
+
+// Função para exibir a resposta do AI no ai-box
+function displayAIResponse(response) {
+    const aiBox = document.getElementById('ai-box');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'ai-message';
+    messageDiv.innerHTML = `
+        <span class="ai-prefix ai-prefix-answer">AI:</span>
+        <span class="ai-content">${response}</span>
+        <hr class="ai-separator">
+    `;
+    aiBox.appendChild(messageDiv);
+    aiBox.scrollTop = aiBox.scrollHeight; // Scroll para o final
+}
 var term = new window.Terminal({
     cursorBlink: true
 });

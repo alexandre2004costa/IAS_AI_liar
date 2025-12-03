@@ -9,10 +9,43 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Config
-setSharedTerminalMode(false); // Set this to false to allow a shared session
+setSharedTerminalMode(false);
 const port = 6060;
 
 const server = http.createServer((req, res) => {
+    // Handle POST request for AI messages
+    if (req.method === 'POST' && req.url === '/api/ai-message') {
+        let body = '';
+        
+        req.on('data', chunk => {
+            body += chunk.toString();
+        });
+        
+        req.on('end', () => {
+            try {
+                const { message, timestamp } = JSON.parse(body);
+                
+                console.log('Mensagem recebida:', message);
+                console.log('Timestamp:', timestamp);
+                
+                // Aqui você processa a mensagem com a sua IA
+                // e retorna a resposta
+                
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                    response: 'Resposta da IA aqui',
+                    receivedMessage: message
+                }));
+            } catch (error) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Invalid JSON' }));
+            }
+        });
+        
+        return;
+    }
+    
+    // Handle GET requests
     if (req.method === 'GET') {
         const routeName = req.url.slice(1);
         const assetObj = {
@@ -26,7 +59,6 @@ const server = http.createServer((req, res) => {
         }
 
         const filePath = path.join(__dirname, assetObj.file);
-
         fs.readFile(filePath, (err, data) => {
             if (err) {
                 res.writeHead(500, { 'Content-Type': 'text/plain' });
@@ -40,7 +72,6 @@ const server = http.createServer((req, res) => {
 });
 
 const wss = new WebSocketServer({ noServer: true });
-
 wss.on('connection', handleTerminalConnection);
 
 server.on('upgrade', (request, socket, head) => {
