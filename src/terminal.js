@@ -1,5 +1,4 @@
 import os from 'os';
-import { v4 as uuidv4 } from 'uuid';
 import pty from 'node-pty';
 import { callLLM } from './llm_client.js';
 import fs from 'fs';
@@ -48,9 +47,6 @@ export const setSharedTerminalMode = (useSharedTerminal) => {
 
 export const handleTerminalConnection = (ws) => {
     let ptyProcess = sharedTerminalMode ? sharedPtyProcess : spawnShell();
-    const sessionId = `ws-${uuidv4()}`;
-
-    // ⭐ removed keystroke tracking logic
 
     setTimeout(() => {
         ptyProcess.write('cd test\r');
@@ -59,13 +55,11 @@ export const handleTerminalConnection = (ws) => {
     ws.on('message', command => {
         if (getLLMProcessing()) {
             ws.send(JSON.stringify({
-                type: 'terminal',
-                text: '\r\n\x1b[33m[Terminal input is disabled while AI is processing...]\x1b[0m\r\n'
+                type: 'warning',
+                text: 'Terminal input is disabled while AI is processing...'
             }));
             return;
         }
-
-        // Just forward raw terminal bytes
         ptyProcess.write(command);
     });
 
@@ -110,8 +104,8 @@ async function callAI(ws, command, rawOutput) {
     setLLMProcessing(true);
 
     ws.send(JSON.stringify({
-        type: 'terminal',
-        text: '\r\n\x1b[36m[AI is processing your command...]\x1b[0m\r\n'
+        type: 'warning',
+        text: 'AI is processing your command...]'
     }));
 
     try {

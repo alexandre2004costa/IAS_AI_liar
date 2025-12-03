@@ -3,6 +3,31 @@ const socketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const socketUrl = `${socketProtocol}//${window.location.host}`;
 const socket = new WebSocket(socketUrl);
 
+let warningTimeout = null;
+
+function showGlobalWarning(text) {
+    const box = document.getElementById("global-warning");
+    
+    // Update the current text
+    box.textContent = text;
+
+    // Make visible
+    box.classList.remove("hidden");
+    box.classList.add("visible");
+
+    // Reset timer if already visible
+    if (warningTimeout) {
+        clearTimeout(warningTimeout);
+    }
+
+    // Hide after 5 seconds
+    warningTimeout = setTimeout(() => {
+        box.classList.remove("visible");
+        box.classList.add("hidden");
+    }, 5000);
+}
+
+
 function AiBoxDisply(type, text){
     const aiBox = document.getElementById('ai-box');
         
@@ -96,6 +121,8 @@ socket.onmessage = (event) => {
             // Scroll automático para o final
             reasoningBox.scrollTop = reasoningBox.scrollHeight;
         }
+    }else if (data.type === "warning") {
+        showGlobalWarning(data.text);
     }
 };
 

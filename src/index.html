@@ -249,14 +249,56 @@
       ::-webkit-scrollbar-thumb:hover {
         background: rgba(255, 255, 255, 0.5);
       }
+/* Center-screen global warning overlay */
+/* Center-screen global warning overlay */
+#global-warning {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 25px 35px;
+
+    background: rgba(0, 0, 0, 0.75);
+    border: 2px solid #ff4444;
+    color: #ffcccc;
+
+    font-size: 20px;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 0.5px;
+
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 20px rgba(255, 60, 60, 0.5);
+
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+    max-width: 70%;
+}
+
+/* Hidden state */
+#global-warning.hidden {
+    opacity: 0;
+}
+
+/* Visible state */
+#global-warning.visible {
+    opacity: 1;
+}
+
+
     </style>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@4.19.0/css/xterm.css" />
     <script src="https://cdn.jsdelivr.net/npm/xterm@4.19.0/lib/xterm.js"></script>
   </head>
   <body>
+    <div id="global-warning" class="hidden"></div>
     <div class="column left-column">
       <h3>Terminal</h3>
       <div class="left-content">
+        <div id="terminal"></div>
         <div id="terminal"></div>
         <div id="reasoning-box">
           <h3>AI Reasoning:</h3>
