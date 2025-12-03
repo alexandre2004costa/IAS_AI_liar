@@ -9,7 +9,9 @@ export const client = new OpenAI({
     apiKey: process.env.OPEN_ROUTER_API_KEY,
 });
 
-export async function callLLM(newInput) {
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+export async function callLLM(newInput, question = false) {
     const messages = [
         {
             role: "system",
@@ -24,8 +26,9 @@ export async function callLLM(newInput) {
             },      
     ];
 
+    
     console.log("Sending messages to LLM:", messages);
-    const completion = await client.chat.completions.create({
+    /*const completion = await client.chat.completions.create({
         model: "arcee-ai/trinity-mini:free",
         messages,
         extra_headers: {
@@ -43,6 +46,7 @@ export async function callLLM(newInput) {
         // reasoning is optional, ignore
     }
 
-    return completion.choices[0].message.content;
+    return completion.choices[0].message.content;*/
+    await sleep(5000);
     return "OUT OF AIIII";
 }

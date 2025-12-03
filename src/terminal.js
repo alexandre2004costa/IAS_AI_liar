@@ -1,16 +1,18 @@
 import os from 'os';
-import { appendEntry } from './store_util.js';
 import { v4 as uuidv4 } from 'uuid';
 import pty from 'node-pty';
 import { callLLM } from './llm_client.js';
+import fs from 'fs';
+
 
 const sessionsBuffer = {};
 
 let sharedPtyProcess = null;
 let sharedTerminalMode = false;
-let Enter = 0;
-const shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
+let lastCommand = null;          // ⭐ Modified
 let isLLMProcessing = false;
+let outputBuffer = "";
+let promptRegex = /[$#>] $/;   // matches: "$ ", "# ", "> "
 
 export function setLLMProcessing(value) {
     isLLMProcessing = value;
@@ -21,9 +23,19 @@ export function getLLMProcessing() {
 }
 
 const spawnShell = () => {
-    return pty.spawn(shell, [], {
+    const isWindows = os.platform() === 'win32';
+
+    const env = {
+        ...process.env,
+        ...(isWindows ? {} : {
+            HISTFILE: "/tmp/.cmdlog",
+            PROMPT_COMMAND: "history -a"   // ⭐ Nunca imprime nada
+        })
+    };
+
+    return pty.spawn(isWindows ? "powershell.exe" : "bash", [], {
         name: 'xterm-color',
-        env: process.env,
+        env
     });
 };
 
@@ -37,87 +49,41 @@ export const setSharedTerminalMode = (useSharedTerminal) => {
 export const handleTerminalConnection = (ws) => {
     let ptyProcess = sharedTerminalMode ? sharedPtyProcess : spawnShell();
     const sessionId = `ws-${uuidv4()}`;
+
+    // ⭐ removed keystroke tracking logic
+
     setTimeout(() => {
         ptyProcess.write('cd test\r');
-        }, 500);
+    }, 500);
 
     ws.on('message', command => {
-        console.log("Is llm processing?", getLLMProcessing());
         if (getLLMProcessing()) {
-            // Send a visual indicator that input is disabled
             ws.send(JSON.stringify({
-            type: 'terminal',
-            text: '\r\n\x1b[33m[Terminal input is disabled while AI is processing...]\x1b[0m\r\n'
+                type: 'terminal',
+                text: '\r\n\x1b[33m[Terminal input is disabled while AI is processing...]\x1b[0m\r\n'
             }));
             return;
         }
-        const processedCommand = commandProcessor(command);
-        console.log("Command received:", processedCommand);
-        for (const byte of command) {
-            switch(byte) {
-                case 0x0d: // CR / Enter
-                case 0x0a: // LF
-                    if ((sessionsBuffer[sessionId] || '').length > 0) {
-                        Enter = 1;
-                    }
-                    
-                    break;
-                case 0x7f: // DEL / Backspace
-                    sessionsBuffer[sessionId] = (sessionsBuffer[sessionId] || '').slice(0, -1);
-                    break;
-                default:
-                    // adiciona carácter normal ao buffer
-                    sessionsBuffer[sessionId] = (sessionsBuffer[sessionId] || '') + String.fromCharCode(byte);
-                    break;
-            }
-        }
-        ptyProcess.write(processedCommand);
-        
+
+        // Just forward raw terminal bytes
+        ptyProcess.write(command);
     });
 
     ptyProcess.on('data', async (rawOutput) => {
-        // Envia sempre o output para o terminal
-        const processedOutput = outputProcessor(rawOutput);
-        ws.send(JSON.stringify({ type: 'terminal', text: processedOutput }));
-    
-        // Se Enter foi pressionado e buffer não está vazio, chama a LLM
-        if (Enter === 2) {
-            const fullCommand = sessionsBuffer[sessionId];
-            sessionsBuffer[sessionId] = '';
-            Enter = 0;
-    
-            if (fullCommand) {
-                appendEntry({
-                    ts: new Date().toISOString(),
-                    sessionId,
-                    type: 'response',
-                    command: fullCommand,
-                    response: rawOutput,
-                    meta: {}
-                });
-                setLLMProcessing(true);
-                console.log("IS LLM PROCESSING SET TO TRUE : ", getLLMProcessing());
-                ws.send(JSON.stringify({
-                    type: 'terminal',
-                    text: '\r\n\x1b[36m[AI is processing your command...]\x1b[0m\r\n'
-                    }));
-                // Chama a LLM de forma assíncrona, sem bloquear o terminal
-                callLLM(`Command: ${fullCommand}\nResponse: ${rawOutput}`)
-                    .then(llmReply => {
-                        ws.send(JSON.stringify({ type: 'llm_feedback_feedback', text: llmReply }));
-                        ws.send(JSON.stringify({ type: 'llm_reasoning', text: 'Reasoning' }));
-                        setLLMProcessing(false);
-                    })
-                    .catch(err => {
-                        console.error("Erro ao chamar LLM:", err)
-                        setLLMProcessing(false);
-                    });
-                    
+        console.log("Full raw output:", rawOutput);
+        ws.send(JSON.stringify({ type: 'terminal', text: rawOutput }));
+
+        // Detect prompt (método simples)
+        if (rawOutput.endsWith("$ ") || rawOutput.endsWith("# ") || rawOutput.endsWith("> ")) {
+            console.log("Detected prompt, invoking LLM...");
+            if (!getLLMProcessing()) {
+                const cmd = getLastCommandFromHistory();
+                console.log("Last command from history:", cmd);
+                if (cmd) {
+                    callAI(ws, cmd, rawOutput);
+                }
             }
         }
-    
-        // Se Enter == 1, significa que detectamos Enter mas ainda não processamos a LLM
-        if (Enter === 1) Enter = 2;
     });
 
     ws.on('close', () => {
@@ -127,12 +93,34 @@ export const handleTerminalConnection = (ws) => {
     });
 };
 
-// Utility function to process commands
-const commandProcessor = (command) => {
-    return command;
-};
+function getLastCommandFromHistory() {
+    try {
+        const text = fs.readFileSync('/tmp/.cmdlog', 'utf8');
+        console.log("Contents of /tmp/.cmdlog:", text);
+        const lines = text.trim().split('\n');
+        return lines[lines.length - 1];
+    } catch {
+        return null;
+    }
+}
 
-// Utility function to process output
-const outputProcessor = (output) => {
-    return output;
-};
+
+// ⭐ new helper
+async function callAI(ws, command, rawOutput) {
+    setLLMProcessing(true);
+
+    ws.send(JSON.stringify({
+        type: 'terminal',
+        text: '\r\n\x1b[36m[AI is processing your command...]\x1b[0m\r\n'
+    }));
+
+    try {
+        const llmReply = await callLLM(`Command: ${command}\nOutput: ${rawOutput}`);
+        ws.send(JSON.stringify({ type: 'llm_feedback_feedback', text: llmReply }));
+        ws.send(JSON.stringify({ type: 'llm_reasoning', text: 'Reasoning' }));
+    } catch (err) {
+        console.error("Erro ao chamar LLM:", err);
+    }
+
+    setLLMProcessing(false);
+}
