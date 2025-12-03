@@ -27,7 +27,7 @@ export async function callLLM(newInput, question = false) {
     ];
 
     
-    console.log("Sending messages to LLM:", messages);
+    console.log("LLM has received:", messages);
     /*const completion = await client.chat.completions.create({
         model: "arcee-ai/trinity-mini:free",
         messages,

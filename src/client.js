@@ -2,7 +2,7 @@
 const socketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const socketUrl = `${socketProtocol}//${window.location.host}`;
 const socket = new WebSocket(socketUrl);
-
+let isLLMProcessingFrontend = false;
 let warningTimeout = null;
 
 function showGlobalWarning(text) {
@@ -130,13 +130,20 @@ const aiInput = document.getElementById('ai-input');
 const aiSendBtn = document.getElementById('send-button');
 
 function sendMessageToBackend() {
-    const message = aiInput.value.trim();
-    
-    if (message === '') {
-        return; // Não enviar se estiver vazio
+    if (isLLMProcessingFrontend) {
+        showGlobalWarning("AI is still processing. Please wait.");
+        console.log("LLM is processing, cannot send a new message yet.");
+        return;
     }
-    
-    // Enviar para o backend via fetch
+
+    const message = aiInput.value.trim();
+    if (message === '') return;
+
+    isLLMProcessingFrontend = true; // block new messages while waiting
+
+    // Optionally show warning locally
+    showGlobalWarning("AI is processing your message...");
+
     fetch('/api/ai-message', {
         method: 'POST',
         headers: {
@@ -150,25 +157,20 @@ function sendMessageToBackend() {
     .then(response => response.json())
     .then(data => {
         console.log('Resposta do backend:', data);
-        // Aqui você pode adicionar a resposta ao ai-box
         AiBoxDisply('llm_feedback_answer', data.response);
+        isLLMProcessingFrontend = false;
     })
     .catch(error => {
         console.error('Erro ao enviar mensagem:', error);
-    });
-    
-    // Limpar o input após enviar
+    })
+
     aiInput.value = '';
 }
 
-// Event listener para o botão
+// Event listeners
 aiSendBtn.addEventListener('click', sendMessageToBackend);
-
-// Event listener para pressionar Enter no input
 aiInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        sendMessageToBackend();
-    }
+    if (e.key === 'Enter') sendMessageToBackend();
 });
 
 var term = new window.Terminal({

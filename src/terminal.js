@@ -48,6 +48,7 @@ export const setSharedTerminalMode = (useSharedTerminal) => {
 export const handleTerminalConnection = (ws) => {
     let ptyProcess = sharedTerminalMode ? sharedPtyProcess : spawnShell();
 
+
     setTimeout(() => {
         ptyProcess.write('cd test\r');
     }, 500);

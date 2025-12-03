@@ -8,7 +8,6 @@ import { handleTerminalConnection, setSharedTerminalMode, setLLMProcessing, getL
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-let isLLMProcessing = false;
 // Config
 setSharedTerminalMode(false);
 const port = 6060;
@@ -24,13 +23,13 @@ const server = http.createServer((req, res) => {
         
         req.on('end', () => {
             try {
-                const { message, timestamp } = JSON.parse(body);
                 
-                console.log('Mensagem recebida:', message);
-                console.log('Timestamp:', timestamp);
+                const { message, timestamp } = JSON.parse(body);
+                console.log("Message arriving on server", message);
                 setLLMProcessing(true);
                 callLLM(`User message: ${message}`)
                     .then(llmReply => {
+                        console.log("Reply from LLM server sending to client:", llmReply);
                         res.writeHead(200, { 'Content-Type': 'application/json' });
                         res.end(JSON.stringify({
                             response: llmReply,
@@ -42,6 +41,7 @@ const server = http.createServer((req, res) => {
                         res.end(JSON.stringify({ error: err }));
                         setLLMProcessing(false);
                     });
+
                 
             } catch (error) {
                 res.writeHead(400, { 'Content-Type': 'application/json' });
