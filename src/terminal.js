@@ -28,7 +28,7 @@ const spawnShell = () => {
         ...process.env,
         ...(isWindows ? {} : {
             HISTFILE: "/tmp/.cmdlog",
-            PROMPT_COMMAND: "history -a"   // ⭐ Nunca imprime nada
+            PROMPT_COMMAND: "history -a"   
         })
     };
 
@@ -68,7 +68,6 @@ export const handleTerminalConnection = (ws) => {
         console.log("Full raw output:", rawOutput);
         ws.send(JSON.stringify({ type: 'terminal', text: rawOutput }));
 
-        // Detect prompt (método simples)
         if (rawOutput.endsWith("$ ") || rawOutput.endsWith("# ") || rawOutput.endsWith("> ")) {
             console.log("Detected prompt, invoking LLM...");
             if (!getLLMProcessing()) {
@@ -91,7 +90,6 @@ export const handleTerminalConnection = (ws) => {
 function getLastCommandFromHistory() {
     try {
         const text = fs.readFileSync('/tmp/.cmdlog', 'utf8');
-        console.log("Contents of /tmp/.cmdlog:", text);
         const lines = text.trim().split('\n');
         return lines[lines.length - 1];
     } catch {
@@ -100,7 +98,6 @@ function getLastCommandFromHistory() {
 }
 
 
-// ⭐ new helper
 async function callAI(ws, command, rawOutput) {
     setLLMProcessing(true);
 
@@ -110,9 +107,9 @@ async function callAI(ws, command, rawOutput) {
     }));
 
     try {
-        const llmReply = await callLLM(`Command: ${command}\nOutput: ${rawOutput}`);
-        ws.send(JSON.stringify({ type: 'llm_feedback_feedback', text: llmReply }));
-        ws.send(JSON.stringify({ type: 'llm_reasoning', text: 'Reasoning' }));
+        const { text, reasoning }  = await callLLM(`Command: ${command}\nOutput: ${rawOutput}`);
+        ws.send(JSON.stringify({ type: 'llm_feedback_feedback', text: text }));
+        ws.send(JSON.stringify({ type: 'llm_reasoning', text: reasoning}));
     } catch (err) {
         console.error("Erro ao chamar LLM:", err);
     }

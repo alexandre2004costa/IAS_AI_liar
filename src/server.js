@@ -28,19 +28,23 @@ const server = http.createServer((req, res) => {
                 console.log("Message arriving on server", message);
                 setLLMProcessing(true);
                 callLLM(`User message: ${message}`)
-                    .then(llmReply => {
-                        console.log("Reply from LLM server sending to client:", llmReply);
-                        res.writeHead(200, { 'Content-Type': 'application/json' });
-                        res.end(JSON.stringify({
-                            response: llmReply,
-                            receivedMessage: message
-                        }));
-                    })
-                    .catch(err => {
-                        res.writeHead(400, { 'Content-Type': 'application/json' });
-                        res.end(JSON.stringify({ error: err }));
-                        setLLMProcessing(false);
-                    });
+                .then(llmReply => {
+                    console.log("Reply from LLM server sending to client:", llmReply);
+            
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({
+                        response: {
+                            text: llmReply.text,
+                            reasoning: llmReply.reasoning
+                        },
+                        receivedMessage: message
+                    }));
+                })
+                .catch(err => {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: err.message || err }));
+                });
+            
 
                 
             } catch (error) {

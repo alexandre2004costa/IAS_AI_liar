@@ -73,8 +73,50 @@ function AiBoxDisply(type, text){
         }
 }
 
+function reasoningDisplay(text){
+
+const reasoningBox = document.getElementById('reasoning-box');
+        
+if (reasoningBox) {
+    // Criar container para esta mensagem de reasoning
+    const reasoningContainer = document.createElement('div');
+    reasoningContainer.className = 'reasoning-message';
+    
+    // Criar elemento para o prefixo
+    const prefixElement = document.createElement('div');
+    prefixElement.className = 'reasoning-prefix';
+    prefixElement.textContent = 'AI Reasoning';
+    
+    // Adicionar timestamp
+    const timestamp = new Date().toLocaleTimeString();
+    const timestampElement = document.createElement('span');
+    timestampElement.className = 'reasoning-timestamp';
+    timestampElement.textContent = ` [${timestamp}]`;
+    prefixElement.appendChild(timestampElement);
+    
+    // Criar elemento para o conteúdo
+    const contentElement = document.createElement('div');
+    contentElement.className = 'reasoning-text';
+    
+    // Converter e adicionar o texto do reasoning
+    const markdownText = text;
+    const htmlContent = marked.parse(markdownText);
+    contentElement.innerHTML = htmlContent;
+    
+    // Montar a mensagem
+    reasoningContainer.appendChild(prefixElement);
+    reasoningContainer.appendChild(contentElement);
+    
+    // Adicionar ao reasoning box
+    reasoningBox.appendChild(reasoningContainer);
+    
+    // Scroll automático para o final
+    reasoningBox.scrollTop = reasoningBox.scrollHeight;
+
+}}
+
 socket.onmessage = (event) => {
-    const data = JSON.parse(event.data);
+        const data = JSON.parse(event.data);
 
     if (data.type === 'terminal') {
         // Saída do terminal (sem alteração)
@@ -82,45 +124,7 @@ socket.onmessage = (event) => {
     } else if (data.type === 'llm_feedback_answer' || data.type === 'llm_feedback_feedback') {
         AiBoxDisply(data.type, data.text);        
     } else if (data.type === 'llm_reasoning') {
-        // Saída do reasoning da AI
-        const reasoningBox = document.getElementById('reasoning-box');
-        
-        if (reasoningBox) {
-            // Criar container para esta mensagem de reasoning
-            const reasoningContainer = document.createElement('div');
-            reasoningContainer.className = 'reasoning-message';
-            
-            // Criar elemento para o prefixo
-            const prefixElement = document.createElement('div');
-            prefixElement.className = 'reasoning-prefix';
-            prefixElement.textContent = 'AI Reasoning';
-            
-            // Adicionar timestamp
-            const timestamp = new Date().toLocaleTimeString();
-            const timestampElement = document.createElement('span');
-            timestampElement.className = 'reasoning-timestamp';
-            timestampElement.textContent = ` [${timestamp}]`;
-            prefixElement.appendChild(timestampElement);
-            
-            // Criar elemento para o conteúdo
-            const contentElement = document.createElement('div');
-            contentElement.className = 'reasoning-text';
-            
-            // Converter e adicionar o texto do reasoning
-            const markdownText = data.text;
-            const htmlContent = marked.parse(markdownText);
-            contentElement.innerHTML = htmlContent;
-            
-            // Montar a mensagem
-            reasoningContainer.appendChild(prefixElement);
-            reasoningContainer.appendChild(contentElement);
-            
-            // Adicionar ao reasoning box
-            reasoningBox.appendChild(reasoningContainer);
-            
-            // Scroll automático para o final
-            reasoningBox.scrollTop = reasoningBox.scrollHeight;
-        }
+        reasoningDisplay(data.text);        
     }else if (data.type === "warning") {
         showGlobalWarning(data.text);
     }
@@ -156,8 +160,10 @@ function sendMessageToBackend() {
     })
     .then(response => response.json())
     .then(data => {
-        console.log('Resposta do backend:', data);
-        AiBoxDisply('llm_feedback_answer', data.response);
+        const llmText = data.response.text;
+        const llmReasoning = data.response.reasoning;
+        reasoningDisplay(llmReasoning);        
+        AiBoxDisply('llm_feedback_answer', llmText);
         isLLMProcessingFrontend = false;
     })
     .catch(error => {
