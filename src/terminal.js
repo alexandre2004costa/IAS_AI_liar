@@ -87,7 +87,7 @@ export const handleTerminalConnection = (ws) => {
             
             if (!getLLMProcessing()) {
                 const cmd = getLastCommandFromHistory();
-                if (cmd) {
+                 if (cmd) {
                     // Remove the trailing prompt line
                     let cleanOutput = commandOutput;
                     

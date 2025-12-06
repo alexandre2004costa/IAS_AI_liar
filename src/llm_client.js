@@ -57,13 +57,16 @@ export async function callLLM(newInput) {
 
     console.log("Sending to LLM:", conversationHistory);
 
-    try {
+    /*try {
         const response = await client.chat.completions.create({
             model: "arcee-ai/trinity-mini:free",
             messages: conversationHistory,
             extra_headers: {
                 "HTTP-Referer": "http://localhost:5000",
-                "X-Title": "Terminal assistant"
+                "X-Title": "Terminal assistant",
+                "reasoning": {
+                        "effort": "low",
+                    }
             }
         });
 
@@ -92,8 +95,8 @@ export async function callLLM(newInput) {
         console.error("LLM call failed:", error);
         throw error;
     }
-}
-/*
-    await sleep(5000);
-    return "OUT OF AIIII";
 }*/
+
+    await sleep(3000);
+    return {text:"OUT OF AIIII" , reasoning:"No reasoning" };
+}
