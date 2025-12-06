@@ -74,7 +74,7 @@ export const handleTerminalConnection = (ws) => {
                 const cmd = getLastCommandFromHistory();
                 console.log("Last command from history:", cmd);
                 if (cmd) {
-                    callAI(ws, cmd, rawOutput);
+                    callAI_Feedback(ws, cmd, rawOutput);
                 }
             }
         }
@@ -98,12 +98,12 @@ function getLastCommandFromHistory() {
 }
 
 
-async function callAI(ws, command, rawOutput) {
+async function callAI_Feedback(ws, command, rawOutput) {
     setLLMProcessing(true);
 
     ws.send(JSON.stringify({
         type: 'warning',
-        text: 'AI is processing your command...]'
+        text: 'AI is processing your command...'
     }));
 
     try {
@@ -112,6 +112,41 @@ async function callAI(ws, command, rawOutput) {
         ws.send(JSON.stringify({ type: 'llm_reasoning', text: reasoning}));
     } catch (err) {
         console.error("Erro ao chamar LLM:", err);
+    }
+
+    setLLMProcessing(false);
+}
+
+export async function callAI_Question(body, res) {
+    setLLMProcessing(true);
+    try {
+                
+        const { message, timestamp } = JSON.parse(body);
+        console.log("Message arriving on server", message);
+        setLLMProcessing(true);
+        callLLM(`User message: ${message}`)
+        .then(llmReply => {
+            console.log("Reply from LLM server sending to client:", llmReply);
+    
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                response: {
+                    text: llmReply.text,
+                    reasoning: llmReply.reasoning
+                },
+                receivedMessage: message
+            }));
+        })
+        .catch(err => {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: err.message || err }));
+        });
+    
+
+        
+    } catch (error) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON' }));
     }
 
     setLLMProcessing(false);

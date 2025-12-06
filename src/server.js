@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { callLLM } from './llm_client.js';
-import { handleTerminalConnection, setSharedTerminalMode, setLLMProcessing, getLLMProcessing } from './terminal.js';
+import { handleTerminalConnection, setSharedTerminalMode, setLLMProcessing, getLLMProcessing, callAI_Question} from './terminal.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,34 +22,18 @@ const server = http.createServer((req, res) => {
         });
         
         req.on('end', () => {
-            try {
+            if (!getLLMProcessing()) {
+                callAI_Question(body, res);
+            }else{
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                    response: {
+                        text: 'Thingking...',
+                        reasoning: ''
+                    },
+                    receivedMessage: ''
+                }));
                 
-                const { message, timestamp } = JSON.parse(body);
-                console.log("Message arriving on server", message);
-                setLLMProcessing(true);
-                callLLM(`User message: ${message}`)
-                .then(llmReply => {
-                    console.log("Reply from LLM server sending to client:", llmReply);
-            
-                    res.writeHead(200, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({
-                        response: {
-                            text: llmReply.text,
-                            reasoning: llmReply.reasoning
-                        },
-                        receivedMessage: message
-                    }));
-                })
-                .catch(err => {
-                    res.writeHead(400, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ error: err.message || err }));
-                });
-            
-
-                
-            } catch (error) {
-                res.writeHead(400, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'Invalid JSON' }));
             }
         });
         

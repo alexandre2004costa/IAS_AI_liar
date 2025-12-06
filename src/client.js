@@ -162,8 +162,12 @@ function sendMessageToBackend() {
     .then(data => {
         const llmText = data.response.text;
         const llmReasoning = data.response.reasoning;
-        reasoningDisplay(llmReasoning);        
-        AiBoxDisply('llm_feedback_answer', llmText);
+        if (llmText === 'Thingking...'){
+            showGlobalWarning("AI is still processing terminal");
+        }else{
+            reasoningDisplay(llmReasoning);        
+            AiBoxDisply('llm_feedback_answer', llmText);
+        }
         isLLMProcessingFrontend = false;
     })
     .catch(error => {
