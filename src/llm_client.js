@@ -58,7 +58,7 @@ export async function callLLM(newInput) {
 
     try {
         const response = await client.chat.completions.create({
-            model: "qwen/qwen3-coder:free",
+            model: "arcee-ai/trinity-mini:free",
             messages: conversationHistory,
             extra_headers: {
                 "HTTP-Referer": "http://localhost:5000",
@@ -75,7 +75,7 @@ export async function callLLM(newInput) {
             content: text
         });
 
-        console.log("LLM RESPONSE:", text);
+        //console.log("LLM RESPONSE:", text);
 
         if (conversationHistory.length > 12) { // 1 system + 5 user/assistant pairs = 11
             const systemMsg = conversationHistory[0];

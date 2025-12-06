@@ -12,6 +12,9 @@ let lastCommand = null;          // ⭐ Modified
 let isLLMProcessing = false;
 let outputBuffer = "";
 let promptRegex = /[$#>] $/;   // matches: "$ ", "# ", "> "
+let commandOutput = '';
+let awaitingPrompt = false;
+
 
 export function setLLMProcessing(value) {
     isLLMProcessing = value;
@@ -67,22 +70,44 @@ export const handleTerminalConnection = (ws) => {
     ptyProcess.on('data', async (rawOutput) => {
         console.log("Full raw output:", rawOutput);
         ws.send(JSON.stringify({ type: 'terminal', text: rawOutput }));
-
-        if (rawOutput.endsWith("$ ") || rawOutput.endsWith("# ") || rawOutput.endsWith("> ")) {
-            console.log("Detected prompt, invoking LLM...");
+        
+        // Detect if Enter was pressed (command submitted)
+        if (rawOutput.includes('\r') || rawOutput.includes('\n')) {
+            commandOutput = rawOutput; // Start collecting from this point
+            awaitingPrompt = true;
+        } 
+        // Continue collecting output
+        else if (awaitingPrompt) {
+            commandOutput += rawOutput;
+        }
+        
+        // Check if command execution finished (prompt detected)
+        if ((rawOutput.endsWith("$ ") || rawOutput.endsWith("# ") || rawOutput.endsWith("> ")) && awaitingPrompt) {
+            console.log("Detected prompt after command execution");
+            
             if (!getLLMProcessing()) {
                 const cmd = getLastCommandFromHistory();
-                console.log("Last command from history:", cmd);
                 if (cmd) {
-                    callAI_Feedback(ws, cmd, rawOutput);
+                    // Remove the trailing prompt line
+                    let cleanOutput = commandOutput;
+                    
+                    // Find the last occurrence of the prompt pattern and remove everything after the last \n before it
+                    const lines = cleanOutput.split('\n');
+                    // Remove the last line (which contains the prompt)
+                    if (lines.length > 0) {
+                        lines.pop();
+                    }
+                    cleanOutput = lines.join('\n');
+                    
+                    console.log("Command:", cmd);
+                    console.log("Clean Output:", cleanOutput);
+                    callAI_Feedback(ws, cmd, cleanOutput);
                 }
             }
-        }
-    });
-
-    ws.on('close', () => {
-        if (!sharedTerminalMode) {
-            ptyProcess.kill();
+            
+            // Reset for next command
+            commandOutput = '';
+            awaitingPrompt = false;
         }
     });
 };
