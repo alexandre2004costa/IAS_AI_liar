@@ -42,6 +42,7 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 export async function callLLM(newInput) {
     // On first call, reset history and inject system prompt
     if (isFirstCall) {
+        newInput = 'Command: cd test \n Output: alexandre-costa@alexandre-costa-Victus-by-HP-Laptop-16-e0xxx:~/Desktop/4year/interactive-terminal/test$';
         conversationHistory = [
             { role: "system", content: SYSTEM_PROMPT }
         ];
