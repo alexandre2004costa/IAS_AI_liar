@@ -100,8 +100,8 @@ export const handleTerminalConnection = (ws) => {
                     cleanOutput = lines.join('\n');
                     
                     console.log("Command:", cmd);
-                    console.log("Clean Output:", cleanOutput);
-                    callAI_Feedback(ws, cmd, cleanOutput);
+                    console.log("Clean Output:", commandOutput);
+                    callAI_Feedback(ws, cmd, commandOutput);
                 }
             }
             
