@@ -41,6 +41,7 @@ const spawnShell = () => {
     });
 };
 
+
 export const setSharedTerminalMode = (useSharedTerminal) => {
     sharedTerminalMode = useSharedTerminal;
     if (sharedTerminalMode && !sharedPtyProcess) {
@@ -53,7 +54,7 @@ export const handleTerminalConnection = (ws) => {
 
 
     setTimeout(() => {
-        ptyProcess.write('cd test\r');
+        ptyProcess.write('cd launch\r');
     }, 500);
 
     ws.on('message', command => {

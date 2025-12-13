@@ -1,4 +1,3 @@
-
 const socketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const socketUrl = `${socketProtocol}//${window.location.host}`;
 const socket = new WebSocket(socketUrl);
@@ -27,6 +26,38 @@ function showGlobalWarning(text) {
     }, 5000);
 }
 
+function displayUserMessage(text) {
+    const aiBox = document.getElementById('ai-box');
+    
+    if (aiBox) {
+        // Create container for user message
+        const messageContainer = document.createElement('div');
+        messageContainer.className = 'ai-message user-message';
+        
+        // Create element for the prefix
+        const prefixElement = document.createElement('span');
+        prefixElement.className = 'ai-prefix user-prefix';
+        prefixElement.textContent = 'You: ';
+        
+        // Create element for the content
+        const contentElement = document.createElement('div');
+        contentElement.className = 'ai-content';
+        contentElement.textContent = text;
+        
+        // Assemble the message
+        messageContainer.appendChild(prefixElement);
+        messageContainer.appendChild(contentElement);
+        
+        // Add separator
+        const separator = document.createElement('hr');
+        separator.className = 'ai-separator';
+        
+        // Add to AI box
+        aiBox.appendChild(messageContainer);
+        aiBox.appendChild(separator);
+        aiBox.scrollTop = aiBox.scrollHeight; // auto scroll
+    }
+}
 
 function AiBoxDisply(type, text){
     
@@ -139,6 +170,9 @@ function sendMessageToBackend() {
     if (message === '') return;
 
     isLLMProcessingFrontend = true; // block new messages while waiting
+
+    // Display user message immediately
+    displayUserMessage(message);
 
     // Optionally show warning locally
     showGlobalWarning("AI is processing your message...");

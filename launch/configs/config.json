@@ -1,0 +1,9 @@
+{
+  "system": "simulated_control_v1",
+  "components": [
+    "telemetry",
+    "scheduler",
+    "monitor"
+  ],
+  "notes": "dummy configuration values for testing only"
+}
