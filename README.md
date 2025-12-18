@@ -19,7 +19,7 @@ The project consists of two parts, the **backend** (Node.js server) and the **fr
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/EDDYMENS/interactive-terminal.git
+   git clone https://github.com/alexandre2004costa/IAS_AI_liar
    ```
 
 2. Navigate to the project directory:
