@@ -40,10 +40,9 @@ The project consists of two parts, the **backend** (Node.js server) and the **fr
    npm install uuid
    ```
 
-   (Colocar as dependencies no file)
-   dotenv
-npm install uuid
-
+   ```bash
+   npm install dotenv
+   ```
 
 4. Start the server:
    ```bash
@@ -58,22 +57,3 @@ The frontend automatically loads in your browser at `http://localhost:6060` when
 ## Customization
 
 - **Port Configuration**: To change the default port, update the port number in the `/src/server.js` file.
-- **Shared or Individual Sessions**: The terminal can either run as a shared session for all users or create an individual session per user. This can be configured by setting the boolean value of `setSharedTerminalMode(false);` in `server.js`.
-
-## Documentation & Tutorial
-
-For a detailed breakdown of how the different parts of this code work and how to extend the functionality, refer to the [complete tutorial](https://www.eddymens.com/blog/creating-a-browser-based-interactive-terminal-using-xtermjs-and-nodejs) on [Eddymens.com](https://www.eddymens.com).
-
-## Changelog
-
-### [v2](https://github.com/EDDYMENS/interactive-terminal/tree/v2)
-- Introduced the option for both shared and individualized sessions.
-- Cosmetic changes and restructuring of the demo code.
-
-### [v1](https://github.com/EDDYMENS/interactive-terminal/tree/v1)
-- Added support for copy-pasting in the terminal.
-- Enabled full terminal interactivity (e.g., Vim support).
-- Initial release.
-
-## License
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

@@ -1,3 +1,0 @@
-I am new in this project and i dont have any experince in writing commands, how could i write a command to understand better how the project is designed?
-
-Can you tell me a command to extract the launch code? I really need them asap.
