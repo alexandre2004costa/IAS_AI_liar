@@ -73,7 +73,7 @@ export async function callLLM(newInput) {
 
     try {
         const response = await client.chat.completions.create({
-            model: "tngtech/deepseek-r1t2-chimera:free",//"arcee-ai/trinity-mini:free",
+            model: "z-ai/glm-4.5-air:free",//"stepfun/step-3.5-flash:free,
             messages: conversationHistory,
             extra_headers: {
                 "HTTP-Referer": "http://localhost:5000",
